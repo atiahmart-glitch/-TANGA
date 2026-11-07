@@ -1,0 +1,13 @@
+{
+  "name": "TANGA Road Awareness",
+  "short_name": "TANGA",
+  "description": "Know the road ahead in Ghana.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#07141b",
+  "theme_color": "#07141b",
+  "icons": [
+    { "src": "./icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
