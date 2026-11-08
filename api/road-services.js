@@ -1,6 +1,5 @@
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
-const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const HEIGIT_API_KEY = process.env.HEIGIT_API_KEY;
 const ORS_BASE = "https://api.heigit.org/openrouteservice";
 
@@ -78,8 +77,8 @@ async function listPublic(res, table, select, filter) {
   return json(res, 200, { items: await response.json() });
 }
 async function submit(res, table, payload) {
-  if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) return json(res, 503, { error: "Report storage is not configured yet." });
-  const response = await supabaseRequest(table, SUPABASE_SERVICE_ROLE_KEY, {
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) return json(res, 503, { error: "Report storage is not configured yet." });
+  const response = await supabaseRequest(table, SUPABASE_ANON_KEY, {
     method: "POST", headers: { Prefer: "return=minimal" }, body: JSON.stringify({ ...payload, status: "pending" })
   });
   if (!response.ok) return json(res, 502, { error: "Could not save this submission." });
