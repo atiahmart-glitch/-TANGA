@@ -14,7 +14,7 @@ A mobile-friendly Ghana road-awareness website built with Leaflet and OpenStreet
 
 ## Setup required
 
-See [ROAD_SERVICES_SETUP.md](ROAD_SERVICES_SETUP.md). Apply the Supabase migration, then add `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and `HEIGIT_API_KEY` in Vercel. Until those are configured, APIs return clear unavailable states; the UI does not invent reports or fuel prices.
+See [ROAD_SERVICES_SETUP.md](ROAD_SERVICES_SETUP.md). Apply the Supabase migration, then add `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` as Vercel server-side environment variables, plus `HEIGIT_API_KEY` for routing. Do not expose the service-role key in browser code. Report/fuel endpoints return a `setup_required` response until Supabase is configured.
 
 The initial implementation still needs moderator tooling, rate limiting or authenticated submissions, and an approved fuel data source before a broad public launch. Fuel prices currently come from driver submissions, not an official Ghana-wide live feed. Confidential police conduct complaints are excluded from the public service.
 
@@ -26,4 +26,4 @@ Place search uses public Nominatim for this lightweight preview. It is limited t
 
 ## Deployment
 
-The road-services update has been merged to `main`. Vercel production deployment and the custom domain should be checked after each merge.
+The road-services update is proposed for review in a pull request. Vercel preview and the custom domain should be checked before merging.
