@@ -27,6 +27,10 @@ Create a HeiGIT account and API key, then set `HEIGIT_API_KEY` in Vercel. TANGA 
 - Police conduct complaints are intentionally excluded from this public report service. They need a separate private, access-controlled and moderated workflow.
 - This initial endpoint is an integration foundation. Before a public launch, add abuse controls (rate limiting/CAPTCHA or authenticated submissions), moderator tooling, and privacy/retention rules.
 
+## Map feature overlays
+
+The map can query OpenStreetMap for mapped traffic signals, physical traffic-sign nodes, and schools inside a small visible bounding box. This is a community map layer, not a complete or official inventory; missing objects should not be interpreted as absence on the road. The shared public Overpass API is intended for modest use and can be overloaded. Keep queries user-triggered and bounded; before wider launch, add caching and move to a contracted endpoint or a self-hosted OSM extract.
+
 ## Offline
 
 The existing service worker caches the app shell. Report and fuel submissions can be queued in this browser until connectivity returns. Route details can be saved locally when the UI integration is enabled. The current OpenStreetMap standard raster tile service does not allow offline area downloads. Do not add tile prefetching to it. For offline map downloads, choose an OSM-derived tile provider or self-hosted vector tiles whose terms explicitly permit offline downloads, then add a bounded download manager and attribution.
