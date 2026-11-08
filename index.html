@@ -137,7 +137,8 @@ async function loadRoadData(){
   try{
     const response=await fetch('/api/road-services?action=reports');if(!response.ok)throw new Error();
     const data=await response.json(),items=data.items||[];
-    if(roadMap)reportMarkers.forEach(marker=>marker.remove());reportMarkers=[];\n    const list=document.getElementById('incidentList');list.replaceChildren();
+    if(roadMap)reportMarkers.forEach(marker=>marker.remove());reportMarkers=[];
+    const list=document.getElementById('incidentList');list.replaceChildren();
     if(!items.length){const empty=document.createElement('div');empty.className='incident';empty.innerHTML='<div class="tagicon">i</div><div><b>No current verified reports</b><p>New reports stay private until reviewed.</p></div>';list.append(empty)}
     items.forEach(report=>{
       const item=document.createElement('article');item.className='incident';
@@ -148,7 +149,7 @@ async function loadRoadData(){
       body.append(title,desc,meta);item.append(icon,body);list.append(item);
       if(roadMap&&Number.isFinite(Number(report.latitude))&&Number.isFinite(Number(report.longitude))){
         const popup=document.createElement('div');popup.textContent=report.category+' · '+report.location_label;
-        L.circleMarker([report.latitude,report.longitude],{radius:7,color:'#b34b35',fillColor:'#ff6f69',fillOpacity:.9}).addTo(roadMap).bindPopup(popup);reportMarkers.push(marker);
+        const marker=L.circleMarker([report.latitude,report.longitude],{radius:7,color:'#b34b35',fillColor:'#ff6f69',fillOpacity:.9});marker.addTo(roadMap).bindPopup(popup);reportMarkers.push(marker);
       }
     });
     document.getElementById('reportsStatus').textContent=items.length?'● VERIFIED':'● NO VERIFIED REPORTS';
