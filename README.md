@@ -5,10 +5,10 @@ A mobile-friendly Ghana road-awareness website built with Leaflet and OpenStreet
 ## Working in this branch
 
 - Ghana map, place search, and current-location marker.
-- Optional map overlays for OpenStreetMap-mapped traffic lights, physical traffic signs, schools, rest stops, food places, hospitals, police stations, and selected road barriers in a zoomed-in visible area.
+- Optional map overlays for OpenStreetMap-mapped traffic lights and cameras, physical traffic signs, schools, fuel stations, rest stops, food places, hospitals, police stations, and selected road barriers in a zoomed-in visible area.
 - Vercel API routes for road reports, fuel-price reports, and car routes.
 - Driver reports and fuel submissions are held as pending until reviewed. Only verified, unexpired records are returned to the public map.
-- Route lookup uses the HeiGIT openrouteservice API and reports distance/time estimates without claiming live traffic.
+- Route lookup uses the HeiGIT openrouteservice API and reports distance/time estimates without claiming live traffic. The dashboard states which feeds are configured and distinguishes estimated routes from live traffic.
 - Offline submissions queue in the browser. Users can download a local JSON bundle of the last route and cached verified reports/prices.
 - Service worker caches the app shell after an online visit.
 
@@ -16,7 +16,7 @@ A mobile-friendly Ghana road-awareness website built with Leaflet and OpenStreet
 
 See [ROAD_SERVICES_SETUP.md](ROAD_SERVICES_SETUP.md). Apply the Supabase migration, then add `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` as Vercel server-side environment variables, plus `HEIGIT_API_KEY` for routing. Do not expose the service-role key in browser code. Report/fuel endpoints return a `setup_required` response until Supabase is configured.
 
-The initial implementation still needs moderator tooling, rate limiting or authenticated submissions, and an approved fuel data source before a broad public launch. Fuel prices currently come from driver submissions, not an official Ghana-wide live feed. Confidential police conduct complaints are excluded from the public service.
+The initial implementation still needs moderator tooling, rate limiting or authenticated submissions, and an approved fuel data source before a broad public launch. Fuel prices currently come from verified driver submissions, not an official Ghana-wide live station-price feed. Ghana’s NPA publishes price floors in periodic pricing windows; these are indicative floors, not current prices at individual stations. A live Waze incidents feed requires an approved Waze for Cities partnership and its private feed URL. Until that is configured, road incidents come from moderated TANGA driver reports. Confidential police conduct complaints are excluded from the public service.
 
 ## Map and offline terms
 
