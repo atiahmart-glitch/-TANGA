@@ -18,7 +18,7 @@
 <div class="modalback" id="fuelModal"><div class="modal"><button class="close" data-close>×</button><h2>Report a fuel price</h2><p>Your price is pending review and will not be shown as verified until approved.</p><label style="font-size:10px;color:#a7bdbe">STATION (OPTIONAL)</label><input class="field" id="fuelStation" placeholder="Station name"><label style="font-size:10px;color:#a7bdbe">FUEL TYPE</label><select class="field" id="fuelProduct"><option value="petrol">Petrol</option><option value="diesel">Diesel</option><option value="lpg">LPG</option></select><label style="font-size:10px;color:#a7bdbe">PRICE · GH₵ PER LITRE</label><input class="field" id="fuelPrice" type="number" min="0.1" step="0.01" placeholder="e.g. 14.50"><label style="font-size:10px;color:#a7bdbe">LOCATION / LANDMARK</label><input class="field" id="fuelLocation" placeholder="Nearest town or landmark"><button class="ghost" type="button" id="fuelGpsBtn">◎ Use my current location</button><p class="legal" id="fuelGpsStatus">A location pin is required.</p><button class="primary submit" id="submitFuel">Submit price for review</button></div></div>
 <div class="modalback" id="premiumModal"><div class="modal submodal"><button class="close" data-close>×</button><div class="logo" style="margin:auto">T</div><h2 style="margin-top:12px">Go further with TANGA+</h2><p>One month free. Cancel anytime.</p><div class="big">30<span style="font-size:15px;color:var(--muted)"> days free</span></div><p>Offline maps · smart route alerts · night road watch · expanded trip planning</p><button class="primary submit" id="trialBtn">Start my free month</button><p class="legal">Subscription pricing and billing will be configured before launch. App Store and Google Play billing integration required for native mobile apps.</p></div></div>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="anonymous"></script><script>
-let roadMap, locationMarker, searchMarker, routeLayer;
+let roadMap, locationMarker, searchMarker, routeLayer, reportMarkers=[];
 let reportCoordinates=null, fuelCoordinates=null, lastRoute=null;
 const pendingKey="tanga-pending-submissions";
 function pendingQueue(){try{return JSON.parse(localStorage.getItem(pendingKey)||"[]")}catch{return []}}
@@ -137,7 +137,7 @@ async function loadRoadData(){
   try{
     const response=await fetch('/api/road-services?action=reports');if(!response.ok)throw new Error();
     const data=await response.json(),items=data.items||[];
-    const list=document.getElementById('incidentList');list.replaceChildren();
+    if(roadMap)reportMarkers.forEach(marker=>marker.remove());reportMarkers=[];\n    const list=document.getElementById('incidentList');list.replaceChildren();
     if(!items.length){const empty=document.createElement('div');empty.className='incident';empty.innerHTML='<div class="tagicon">i</div><div><b>No current verified reports</b><p>New reports stay private until reviewed.</p></div>';list.append(empty)}
     items.forEach(report=>{
       const item=document.createElement('article');item.className='incident';
@@ -148,7 +148,7 @@ async function loadRoadData(){
       body.append(title,desc,meta);item.append(icon,body);list.append(item);
       if(roadMap&&Number.isFinite(Number(report.latitude))&&Number.isFinite(Number(report.longitude))){
         const popup=document.createElement('div');popup.textContent=report.category+' · '+report.location_label;
-        L.circleMarker([report.latitude,report.longitude],{radius:7,color:'#b34b35',fillColor:'#ff6f69',fillOpacity:.9}).addTo(roadMap).bindPopup(popup);
+        L.circleMarker([report.latitude,report.longitude],{radius:7,color:'#b34b35',fillColor:'#ff6f69',fillOpacity:.9}).addTo(roadMap).bindPopup(popup);reportMarkers.push(marker);
       }
     });
     document.getElementById('reportsStatus').textContent=items.length?'● VERIFIED':'● NO VERIFIED REPORTS';
