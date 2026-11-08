@@ -5,7 +5,7 @@ A mobile-friendly Ghana road-awareness website built with Leaflet and OpenStreet
 ## Working in this branch
 
 - Ghana map, place search, and current-location marker.
-- Optional map overlays for OpenStreetMap-mapped traffic lights, physical traffic signs, and schools in a zoomed-in visible area.
+- Optional map overlays for OpenStreetMap-mapped traffic lights, physical traffic signs, schools, rest stops, food places, hospitals, police stations, and selected road barriers in a zoomed-in visible area.
 - Vercel API routes for road reports, fuel-price reports, and car routes.
 - Driver reports and fuel submissions are held as pending until reviewed. Only verified, unexpired records are returned to the public map.
 - Route lookup uses the HeiGIT openrouteservice API and reports distance/time estimates without claiming live traffic.
