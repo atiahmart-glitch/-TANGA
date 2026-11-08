@@ -1,28 +1,28 @@
 # TANGA
 
-A mobile-friendly Ghana road-awareness website. The current branch replaces the decorative map with an interactive map using Leaflet and OpenStreetMap.
+A mobile-friendly Ghana road-awareness website built with Leaflet and OpenStreetMap.
 
-## What works in this preview
+## Working in this branch
 
-- Interactive OpenStreetMap map centered on Ghana, with pan and zoom.
-- Place search through the OpenStreetMap Nominatim service, limited to Ghana and triggered only when the user submits a search.
-- Optional current-location marker, after the user grants browser location permission.
-- Online/offline status display. The service worker caches the same-origin app shell after the first visit.
+- Ghana map, place search, and current-location marker.
+- Vercel API routes for road reports, fuel-price reports, and car routes.
+- Driver reports and fuel submissions are held as pending until reviewed. Only verified, unexpired records are returned to the public map.
+- Route lookup uses the HeiGIT openrouteservice API and reports distance/time estimates without claiming live traffic.
+- Offline submissions queue in the browser. Users can download a local JSON bundle of the last route and cached verified reports/prices.
+- Service worker caches the app shell after an online visit.
 
-## What is not connected yet
+## Setup required
 
-Road incidents, verified police/camera locations, fuel prices, route times, public report sharing, subscriptions, and downloaded offline map areas are not live services. The app shows empty or unavailable states instead of sample alerts or sample prices. A report submitted in this preview appears only in the current browser session and is not shared.
+See [ROAD_SERVICES_SETUP.md](ROAD_SERVICES_SETUP.md). Apply the Supabase migration, then add `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and `HEIGIT_API_KEY` in Vercel. Until those are configured, APIs return clear unavailable states; the UI does not invent reports or fuel prices.
 
-## Map source and service limits
+The initial implementation still needs moderator tooling, rate limiting or authenticated submissions, and an approved fuel data source before a broad public launch. Fuel prices currently come from driver submissions, not an official Ghana-wide live feed. Confidential police conduct complaints are excluded from the public service.
 
-The map uses Leaflet 1.9.4 and OpenStreetMap standard raster tiles with visible attribution. The tiles require an internet connection. OpenStreetMap's standard tile service does not permit offline tile use, bulk prefetching, or use that overloads its volunteer infrastructure. Before a larger public launch, move to a map provider or hosted tileset whose pricing, service guarantees, and offline terms fit TANGA. See the [OpenStreetMap tile policy](https://operations.osmfoundation.org/policies/tiles/).
+## Map and offline terms
 
-Place search uses the public Nominatim service only for this lightweight preview. It has a strict maximum of one request per second for the whole application and does not support autocomplete. Before significant public use, move search to a contracted provider or a properly operated service. See the [Nominatim usage policy](https://operations.osmfoundation.org/policies/nominatim/).
+The map uses the public OpenStreetMap standard raster tile server with attribution. Those tiles require internet and may not be bulk downloaded or prefetched for offline regions. The offline export saves route/report/price data, not map tiles. Choose an OSM-derived provider or self-hosted tiles whose terms explicitly allow offline use before implementing regional map downloads. See the [OSM tile policy](https://operations.osmfoundation.org/policies/tiles/).
+
+Place search uses public Nominatim for this lightweight preview. It is limited to one request per second for the whole application and should be replaced by a contracted or self-hosted service before significant public use. See the [Nominatim usage policy](https://operations.osmfoundation.org/policies/nominatim/).
 
 ## Deployment
 
-The site is static and can be served by Vercel from the repository root. The existing Vercel project can create a preview deployment for this branch. Production on `usetanga.com` should be updated only after the preview is reviewed and this branch is merged.
-
-## Offline behavior
-
-After one online visit, the service worker can reopen the app shell while offline. The base map tiles and place search still need internet. This is not turn-by-turn navigation and should not be used as a substitute for official road instructions.
+Vercel can create a preview deployment for this branch. Production at `usetanga.com` should be updated after review and merge.
