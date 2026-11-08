@@ -5,8 +5,9 @@ This branch adds a Vercel Node function at `/api/road-services` and a Supabase m
 ## Supabase
 
 1. In the Supabase SQL editor, run `supabase/migrations/202611070001_road_fuel_services.sql`.
-2. Add the project URL, anon key, and HeiGIT API key to Vercel as `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and `HEIGIT_API_KEY`. The reports API uses the anon key with row-level security; do not add a service-role key.
-3. The public endpoints only return non-expired rows whose status is `verified`. New driver submissions use RLS-constrained inserts and are saved as `pending`; a moderator must update them.
+2. Add `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` to Vercel for report and fuel storage. Set `HEIGIT_API_KEY` for routing.
+3. Keep `SUPABASE_SERVICE_ROLE_KEY` server-side only. Never add it to browser code or a public `NEXT_PUBLIC_*`/Vite `VITE_*` variable. The function returns `{ "setup_required": true }` with HTTP 200 for report/fuel API actions until Supabase URL and service key are configured.
+4. Public reads are filtered to non-expired records with `status=verified`. Driver submissions are saved with `status=pending`; a moderator must verify them before they appear.
 
 Routes:
 
