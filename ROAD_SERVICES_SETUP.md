@@ -6,7 +6,7 @@ This branch adds Vercel Functions under `/api/road-services` and a Supabase migr
 
 1. In the Supabase SQL editor, run `supabase/migrations/202611070001_road_fuel_services.sql`.
 2. Add the project URL, anon key, and service role key to Vercel as `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY`. Keep the service role key server-only; never put it in `index.html`.
-3. The public endpoints only return non-expired rows whose status is `verified`. New driver submissions are saved as `pending` and require a moderator to update them.
+3. The public endpoints only return non-expired rows whose status is `verified`. New driver submissions use RLS-constrained inserts and are saved as `pending`; a moderator must update them.
 
 Routes:
 
