@@ -20,18 +20,109 @@
 let roadMap, locationMarker, searchMarker;
 const networkLabel=document.getElementById('networkLabel');
 const mapNotice=document.getElementById('mapnotice');
-function updateNetworkState(){const online=navigator.onLine;networkLabel.textContent=online?'Online · live map':'Offline · map tiles unavailable';const dot=document.querySelector('.status .dot');if(dot)dot.style.background=online?'var(--aqua)':'var(--red)';mapNotice.textContent=online?'Live map · OpenStreetMap · search via OSM':'Offline · saved page only; map tiles need internet';}
-window.addEventListener('online',updateNetworkState);window.addEventListener('offline',updateNetworkState);updateNetworkState();const today=document.getElementById('todayLabel');if(today)today.textContent=new Intl.DateTimeFormat('en-GH',{weekday:'long',month:'long',day:'numeric',timeZone:'Africa/Accra'}).format(new Date()).toUpperCase()+' · GHANA';
-roadMap=L.map('map',{zoomControl:false,scrollWheelZoom:true}).setView([7.9465,-1.0232],6);
-const osmTiles=L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{minZoom:5,maxZoom:19,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>'}).addTo(roadMap);
-osmTiles.on('tileerror',()=>{mapNotice.textContent='Map tiles unavailable · check your connection';});
-osmTiles.on('load',()=>{updateNetworkState();});
-window.addEventListener('load',()=>setTimeout(()=>roadMap.invalidateSize(),150));
-const toast=(s)=>{let t=document.getElementById('toast');t.textContent=s;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200)};
+function updateNetworkState(){
+  const online=navigator.onLine;
+  networkLabel.textContent=online?'Online · live map':'Offline · map tiles unavailable';
+  const dot=document.querySelector('.status .dot');
+  if(dot)dot.style.background=online?'var(--aqua)':'var(--red)';
+  mapNotice.textContent=online?'Live map · OpenStreetMap · search via OSM':'Offline · saved page only; map tiles need internet';
+}
+window.addEventListener('online',updateNetworkState);
+window.addEventListener('offline',updateNetworkState);
+updateNetworkState();
+const today=document.getElementById('todayLabel');
+if(today)today.textContent=new Intl.DateTimeFormat('en-GH',{weekday:'long',month:'long',day:'numeric',timeZone:'Africa/Accra'}).format(new Date()).toUpperCase()+' · GHANA';
+if(window.L){
+  roadMap=L.map('map',{zoomControl:false,scrollWheelZoom:true}).setView([7.9465,-1.0232],6);
+  const osmTiles=L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{
+    minZoom:5,maxZoom:19,
+    attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>'
+  }).addTo(roadMap);
+  osmTiles.on('tileerror',()=>{mapNotice.textContent='Map tiles unavailable · check your connection';});
+  osmTiles.on('load',updateNetworkState);
+}else{
+  mapNotice.textContent=navigator.onLine?'Map library unavailable. Refresh while online.':'Map view needs an internet connection.';
+}
+window.addEventListener('load',()=>{if(roadMap)setTimeout(()=>roadMap.invalidateSize(),150)});
+const toast=(message)=>{
+  const element=document.getElementById('toast');
+  element.textContent=message;element.classList.add('show');
+  setTimeout(()=>element.classList.remove('show'),2400);
+};
 function modal(id,open){document.getElementById(id).classList.toggle('open',open)}
-document.getElementById('reportBtn').onclick=()=>modal('reportModal',true);document.getElementById('premiumBtn').onclick=()=>modal('premiumModal',true);document.querySelectorAll('[data-close]').forEach(x=>x.onclick=()=>{modal('reportModal',false);modal('premiumModal',false)});document.querySelectorAll('.modalback').forEach(x=>x.onclick=e=>{if(e.target===x)x.classList.remove('open')});
-document.querySelectorAll('.type').forEach(b=>b.onclick=()=>{document.querySelectorAll('.type').forEach(x=>x.classList.remove('selected'));b.classList.add('selected')});
-document.getElementById('submitReport').onclick=()=>{const loc=document.getElementById('locationField').value.trim();if(!loc){document.getElementById('locationField').focus();toast('Add a nearby landmark to continue');return}const type=document.querySelector('.type.selected').textContent;const detail=document.getElementById('detailField').value.trim();let item=document.createElement('article');item.className='incident';item.innerHTML='<div class="tagicon">'+type.split(' ')[0]+'</div><div><b>'+type.replace(/^\S+\s/,'')+'</b><p></p><span class="meta">Session draft · not shared</span></div><button class="confirm">✓ 0</button>';item.querySelector('p').textContent=loc+(detail?' · '+detail:'');document.getElementById('incidentList').prepend(item);modal('reportModal',false);document.getElementById('locationField').value='';document.getElementById('detailField').value='';toast('Draft shown in this session only; not shared')};
-document.getElementById('trialBtn').onclick=()=>{modal('premiumModal',false);toast('Trial signup preview — billing setup needed')};document.getElementById('downloadBtn').onclick=()=>toast('Offline maps are not available yet. Live map tiles need an internet connection.');document.getElementById('layersBtn').onclick=()=>toast('Verified road and services layers are not connected yet.');document.getElementById('locateBtn').onclick=()=>{if(!navigator.geolocation){toast('Location is not supported in this browser');return}navigator.geolocation.getCurrentPosition(p=>{const ll=[p.coords.latitude,p.coords.longitude];roadMap.setView(ll,15);if(locationMarker)locationMarker.remove();locationMarker=L.marker(ll).addTo(roadMap).bindPopup('Your current location').openPopup()},()=>toast('Location unavailable or permission not granted'),{enableHighAccuracy:true,timeout:10000})};document.getElementById('zoomIn').onclick=()=>roadMap.zoomIn();document.getElementById('zoomOut').onclick=()=>roadMap.zoomOut();document.getElementById('searchInput').onkeydown=async e=>{if(e.key!=='Enter')return;const q=e.target.value.trim();if(!q)return;if(!navigator.onLine){toast('Search needs an internet connection');return}toast('Searching Ghana…');try{const res=await fetch('https://nominatim.openstreetmap.org/search?format=jsonv2&countrycodes=gh&limit=1&q='+encodeURIComponent(q),{headers:{Accept:'application/json'}});if(!res.ok)throw new Error('Search unavailable');const data=await res.json();if(!data.length){toast('No Ghana place found for “'+q+'”');return}const place=data[0],ll=[Number(place.lat),Number(place.lon)];roadMap.setView(ll,Math.max(14,roadMap.getZoom()));if(searchMarker)searchMarker.remove();searchMarker=L.marker(ll).addTo(roadMap).bindPopup(place.display_name).openPopup();toast('Place found')}catch(err){toast('Place search is unavailable right now')}};document.querySelectorAll('[data-nav]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-nav]').forEach(x=>x.classList.remove('active'));b.classList.add('active');toast(b.dataset.nav+' view preview')});document.querySelectorAll('.confirm').forEach(b=>b.onclick=()=>{let n=parseInt(b.textContent.match(/\d+/)?.[0]||0)+1;b.textContent='✓ '+n;toast('Thanks for confirming')});document.querySelectorAll('.mobiletabs button').forEach(b=>b.onclick=()=>{document.querySelectorAll('.mobiletabs button').forEach(x=>x.classList.remove('active'));b.classList.add('active');toast(b.textContent.trim()+' view preview')});
+document.getElementById('reportBtn').onclick=()=>modal('reportModal',true);
+document.getElementById('premiumBtn').onclick=()=>modal('premiumModal',true);
+document.querySelectorAll('[data-close]').forEach(button=>button.onclick=()=>{
+  modal('reportModal',false);modal('premiumModal',false)
+});
+document.querySelectorAll('.modalback').forEach(backdrop=>backdrop.onclick=event=>{
+  if(event.target===backdrop)backdrop.classList.remove('open')
+});
+document.querySelectorAll('.type').forEach(button=>button.onclick=()=>{
+  document.querySelectorAll('.type').forEach(type=>type.classList.remove('selected'));
+  button.classList.add('selected')
+});
+document.getElementById('submitReport').onclick=()=>{
+  const locationText=document.getElementById('locationField').value.trim();
+  if(!locationText){document.getElementById('locationField').focus();toast('Add a nearby landmark to continue');return}
+  const category=document.querySelector('.type.selected').textContent;
+  const detail=document.getElementById('detailField').value.trim();
+  const item=document.createElement('article');item.className='incident';
+  const icon=document.createElement('div');icon.className='tagicon';icon.textContent=category.split(' ')[0];
+  const body=document.createElement('div');
+  const title=document.createElement('b');title.textContent=category.substring(category.indexOf(' ')+1);
+  const description=document.createElement('p');description.textContent=locationText+(detail?' · '+detail:'');
+  const meta=document.createElement('span');meta.className='meta';meta.textContent='Session draft · not shared';
+  body.append(title,description,meta);item.append(icon,body);
+  document.getElementById('incidentList').prepend(item);
+  modal('reportModal',false);
+  document.getElementById('locationField').value='';
+  document.getElementById('detailField').value='';
+  toast('Draft shown in this session only; not shared')
+};
+document.getElementById('trialBtn').onclick=()=>{
+  modal('premiumModal',false);toast('Trial signup preview · billing is not connected')
+};
+document.getElementById('downloadBtn').onclick=()=>toast('Offline maps are not available yet. Live map tiles need internet.');
+document.getElementById('layersBtn').onclick=()=>toast('Verified road and services layers are not connected yet.');
+document.getElementById('locateBtn').onclick=()=>{
+  if(!roadMap){toast('Map view needs an internet connection');return}
+  if(!navigator.geolocation){toast('Location is not supported in this browser');return}
+  navigator.geolocation.getCurrentPosition(position=>{
+    const point=[position.coords.latitude,position.coords.longitude];
+    roadMap.setView(point,15);
+    if(locationMarker)locationMarker.remove();
+    locationMarker=L.marker(point).addTo(roadMap).bindPopup('Your current location').openPopup()
+  },()=>toast('Location unavailable or permission not granted'),{enableHighAccuracy:true,timeout:10000})
+};
+document.getElementById('zoomIn').onclick=()=>roadMap?roadMap.zoomIn():toast('Map view needs an internet connection');
+document.getElementById('zoomOut').onclick=()=>roadMap?roadMap.zoomOut():toast('Map view needs an internet connection');
+document.getElementById('searchInput').onkeydown=async event=>{
+  if(event.key!=='Enter')return;
+  const query=event.target.value.trim();
+  if(!query)return;
+  if(!navigator.onLine||!roadMap){toast('Place search needs an internet connection');return}
+  toast('Searching Ghana…');
+  try{
+    const response=await fetch('https://nominatim.openstreetmap.org/search?format=jsonv2&countrycodes=gh&limit=1&q='+encodeURIComponent(query),{headers:{Accept:'application/json'}});
+    if(!response.ok)throw new Error('Search unavailable');
+    const results=await response.json();
+    if(!results.length){toast('No Ghana place found for “'+query+'”');return}
+    const place=results[0],point=[Number(place.lat),Number(place.lon)];
+    roadMap.setView(point,Math.max(14,roadMap.getZoom()));
+    if(searchMarker)searchMarker.remove();
+    const popup=document.createElement('div');popup.textContent=place.display_name;
+    searchMarker=L.marker(point).addTo(roadMap).bindPopup(popup).openPopup();
+    toast('Place found')
+  }catch(error){toast('Place search is unavailable right now')}
+};
+document.querySelectorAll('[data-nav]').forEach(button=>button.onclick=()=>{
+  document.querySelectorAll('[data-nav]').forEach(item=>item.classList.remove('active'));
+  button.classList.add('active');toast(button.dataset.nav+' view preview')
+});
+document.querySelectorAll('.mobiletabs button').forEach(button=>button.onclick=()=>{
+  document.querySelectorAll('.mobiletabs button').forEach(item=>item.classList.remove('active'));
+  button.classList.add('active');toast(button.textContent.trim()+' view preview')
+});
 </script><script>if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")) { window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js").catch(() => {})); }</script></body></html>
 
