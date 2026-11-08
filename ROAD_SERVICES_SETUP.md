@@ -1,11 +1,11 @@
 # TANGA road services setup
 
-This branch adds Vercel Functions under `/api/road-services` and a Supabase migration for moderated reports and fuel prices.
+This branch adds a Vercel Node function at `/api/road-services` and a Supabase migration for moderated reports and fuel prices.
 
 ## Supabase
 
 1. In the Supabase SQL editor, run `supabase/migrations/202611070001_road_fuel_services.sql`.
-2. Add the project URL, anon key, and service role key to Vercel as `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY`. Keep the service role key server-only; never put it in `index.html`.
+2. Add the project URL, anon key, and HeiGIT API key to Vercel as `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and `HEIGIT_API_KEY`. The reports API uses the anon key with row-level security; do not add a service-role key.
 3. The public endpoints only return non-expired rows whose status is `verified`. New driver submissions use RLS-constrained inserts and are saved as `pending`; a moderator must update them.
 
 Routes:
@@ -33,4 +33,4 @@ The map can query OpenStreetMap for mapped traffic signals, physical traffic-sig
 
 ## Offline
 
-The existing service worker caches the app shell. Report and fuel submissions can be queued in this browser until connectivity returns. Route details can be saved locally when the UI integration is enabled. The current OpenStreetMap standard raster tile service does not allow offline area downloads. Do not add tile prefetching to it. For offline map downloads, choose an OSM-derived tile provider or self-hosted vector tiles whose terms explicitly permit offline downloads, then add a bounded download manager and attribution.
+The existing service worker caches the app shell. Report and fuel submissions can be queued in this browser until connectivity returns. The UI can export the last route and locally cached verified report/fuel data as a JSON file. The current OpenStreetMap standard raster tile service does not allow offline area downloads. Do not add tile prefetching to it. For offline map downloads, choose an OSM-derived tile provider or self-hosted vector tiles whose terms explicitly permit offline downloads, then add a bounded download manager and attribution.
