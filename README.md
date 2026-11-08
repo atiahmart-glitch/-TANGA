@@ -26,4 +26,4 @@ Place search uses public Nominatim for this lightweight preview. It is limited t
 
 ## Deployment
 
-Vercel can create a preview deployment for this branch. Production at `usetanga.com` should be updated after review and merge.
+The road-services update has been merged to `main`. Vercel production deployment and the custom domain should be checked after each merge.
