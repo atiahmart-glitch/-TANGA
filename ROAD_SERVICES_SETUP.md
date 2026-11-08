@@ -29,7 +29,7 @@ Create a HeiGIT account and API key, then set `HEIGIT_API_KEY` in Vercel. TANGA 
 
 ## Map feature overlays
 
-The map can query OpenStreetMap for mapped traffic signals, physical traffic-sign nodes, and schools inside a small visible bounding box. This is a community map layer, not a complete or official inventory; missing objects should not be interpreted as absence on the road. The shared public Overpass API is intended for modest use and can be overloaded. Keep queries user-triggered and bounded; before wider launch, add caching and move to a contracted endpoint or a self-hosted OSM extract.
+The map can query OpenStreetMap for mapped traffic signals, physical traffic-sign nodes, schools, rest areas/service areas, restaurants/cafes/fast-food places, hospitals, public-facing police stations, and selected physical road barriers inside a small visible bounding box. A barrier marker describes a mapped physical feature; it does not say whether a road is currently blocked. This is a community map layer, not a complete or official inventory; missing objects should not be interpreted as absence on the road. The shared public Overpass API is intended for modest use and can be overloaded. Keep queries user-triggered and bounded; before wider launch, add caching and move to a contracted endpoint or a self-hosted OSM extract.
 
 ## Offline
 
