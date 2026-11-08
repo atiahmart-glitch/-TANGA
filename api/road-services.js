@@ -27,11 +27,7 @@ function readBody(req) {
   return body && typeof body === "object" && !Array.isArray(body) ? body : null;
 }
 function setupRequired() {
-  return result(200, {
-    setup_required: true,
-    error: "Road data service is not configured yet.",
-    items: []
-  });
+  return result(200, { setup_required: true });
 }
 function supabaseConfigured() {
   return Boolean(SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY);
@@ -174,7 +170,9 @@ module.exports = async (req, res) => {
     const method = (req.method || "GET").toUpperCase();
     let output;
 
-    if (action === "route" && method === "POST") {
+    if ((action === "reports" || action === "fuel") && !supabaseConfigured()) {
+      output = setupRequired();
+    } else if (action === "route" && method === "POST") {
       const body = readBody(req);
       output = body ? await calculateRoute(body) : result(400, { error: "A valid JSON object is required." });
     } else if (action === "reports" && method === "GET") {
