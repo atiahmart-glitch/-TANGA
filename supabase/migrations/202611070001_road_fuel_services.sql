@@ -36,8 +36,8 @@ alter table public.road_reports enable row level security;
 alter table public.fuel_price_reports enable row level security;
 revoke all on public.road_reports from anon, authenticated;
 revoke all on public.fuel_price_reports from anon, authenticated;
-grant select on public.road_reports to anon, authenticated;
-grant select on public.fuel_price_reports to anon, authenticated;
+grant select, insert on public.road_reports to anon, authenticated;
+grant select, insert on public.fuel_price_reports to anon, authenticated;
 
 create policy "Anyone can read current verified road reports"
 on public.road_reports for select to anon, authenticated
@@ -46,3 +46,11 @@ using (status = 'verified' and expires_at > now());
 create policy "Anyone can read current verified fuel prices"
 on public.fuel_price_reports for select to anon, authenticated
 using (status = 'verified' and expires_at > now());
+
+create policy "Drivers can submit pending road reports"
+on public.road_reports for insert to anon, authenticated
+with check (status = 'pending' and expires_at > now());
+
+create policy "Drivers can submit pending fuel prices"
+on public.fuel_price_reports for insert to anon, authenticated
+with check (status = 'pending' and expires_at > now());
