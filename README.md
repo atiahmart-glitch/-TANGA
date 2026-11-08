@@ -1,33 +1,28 @@
 # TANGA
 
-A mobile-first Ghana road awareness prototype. This is a static website that can be published with GitHub Pages.
+A mobile-friendly Ghana road-awareness website. The current branch replaces the decorative map with an interactive map using Leaflet and OpenStreetMap.
 
-## Publish on GitHub Pages
+## What works in this preview
 
-1. Create or open the `-TANGA` repository.
-2. Upload **all files in this folder**, keeping the same folder structure. `index.html` must be in the repository root.
-3. In GitHub, open **Settings → Pages**.
-4. Under **Build and deployment**, choose **Deploy from a branch**, select `main` and `/(root)`, then save.
-5. Wait for the Pages deployment and open the URL shown in that settings page.
+- Interactive OpenStreetMap map centered on Ghana, with pan and zoom.
+- Place search through the OpenStreetMap Nominatim service, limited to Ghana and triggered only when the user submits a search.
+- Optional current-location marker, after the user grants browser location permission.
+- Online/offline status display. The service worker caches the same-origin app shell after the first visit.
 
-## Test locally
+## What is not connected yet
 
-Opening `index.html` directly works for the prototype. To test the install prompt and offline app-shell caching, serve the folder over HTTPS or localhost. For example, with Python installed:
+Road incidents, verified police/camera locations, fuel prices, route times, public report sharing, subscriptions, and downloaded offline map areas are not live services. The app shows empty or unavailable states instead of sample alerts or sample prices. A report submitted in this preview appears only in the current browser session and is not shared.
 
-```sh
-python -m http.server 8000
-```
+## Map source and service limits
 
-Then open `http://localhost:8000` in a browser.
+The map uses Leaflet 1.9.4 and OpenStreetMap standard raster tiles with visible attribution. The tiles require an internet connection. OpenStreetMap's standard tile service does not permit offline tile use, bulk prefetching, or use that overloads its volunteer infrastructure. Before a larger public launch, move to a map provider or hosted tileset whose pricing, service guarantees, and offline terms fit TANGA. See the [OpenStreetMap tile policy](https://operations.osmfoundation.org/policies/tiles/).
 
-## Included files
+Place search uses the public Nominatim service only for this lightweight preview. It has a strict maximum of one request per second for the whole application and does not support autocomplete. Before significant public use, move search to a contracted provider or a properly operated service. See the [Nominatim usage policy](https://operations.osmfoundation.org/policies/nominatim/).
 
-- `index.html` — responsive TANGA interface and demo interactions
-- `manifest.webmanifest` — install metadata for Android and supported desktop browsers
-- `sw.js` — caches the app shell after the first online visit
-- `icon.svg` — app icon
-- `.nojekyll` — tells GitHub Pages to serve all files directly
+## Deployment
 
-## Before public launch
+The site is static and can be served by Vercel from the repository root. The existing Vercel project can create a preview deployment for this branch. Production on `usetanga.com` should be updated only after the preview is reviewed and this branch is merged.
 
-The map, alerts, fuel price, route estimates, and reports in this prototype are illustrative sample content. The offline worker caches the app shell only; it does not download Ghana map tiles or live data. Production requires a licensed map provider, verified official/public datasets and live integrations, a backend for shared reports and moderation, privacy and safety review, push notifications, and app-store billing for native Android/iPhone subscriptions. Do not treat sample information as verified road guidance.
+## Offline behavior
+
+After one online visit, the service worker can reopen the app shell while offline. The base map tiles and place search still need internet. This is not turn-by-turn navigation and should not be used as a substitute for official road instructions.
