@@ -89,7 +89,9 @@ function captureGps(statusId, locationInputId, target) {
 document.getElementById('reportGpsBtn').onclick=()=>captureGps('reportGpsStatus','locationField',{set coords(value){reportCoordinates=value}});
 document.getElementById('fuelGpsBtn').onclick=()=>captureGps('fuelGpsStatus','fuelLocation',{set coords(value){fuelCoordinates=value}});
 function renderLocalSubmission(report) {
-  const item=document.createElement('article');item.className='incident';
+  const list=document.getElementById('incidentList');
+  if(Array.from(list.querySelectorAll('[data-private-report-id]')).some(item=>item.dataset.privateReportId===report.id))return;
+  const item=document.createElement('article');item.className='incident';item.dataset.privateReportId=report.id;
   const icon=document.createElement('div');icon.className='tagicon';icon.textContent='!';
   const body=document.createElement('div');const title=document.createElement('b');title.textContent=report.category;
   const description=document.createElement('p');description.textContent=report.location_label+(report.details?' · '+report.details:'');
@@ -164,10 +166,7 @@ async function loadRoadData(){
   const list=document.getElementById('incidentList');
   if(!navigator.onLine){
     privateReportMarkers.forEach(marker=>marker.remove());privateReportMarkers=[];
-    list.replaceChildren();
-    const local=privateReports();
-    if(local.length){local.forEach(report=>{renderLocalSubmission(report);addPrivateReportMarker(report)})}
-    else{const offline=document.createElement('div');offline.className='incident';offline.textContent='Offline · private submissions will stay saved on this device.';list.append(offline)}
+    privateReports().forEach(report=>{renderLocalSubmission(report);addPrivateReportMarker(report)});
     return;
   }
   try{
