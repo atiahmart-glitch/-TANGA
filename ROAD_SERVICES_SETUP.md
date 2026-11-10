@@ -7,7 +7,7 @@ This branch adds a Vercel Node function at `/api/road-services` and a Supabase m
 1. In the Supabase SQL editor, run `supabase/migrations/202611070001_road_fuel_services.sql`.
 2. Add `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` to Vercel for report and fuel storage. Set `HEIGIT_API_KEY` for routing.
 3. Keep `SUPABASE_SERVICE_ROLE_KEY` server-side only. Never add it to browser code or a public `NEXT_PUBLIC_*`/Vite `VITE_*` variable. The function returns `{ "setup_required": true }` with HTTP 200 for report/fuel API actions until Supabase URL and service key are configured.
-4. Public reads are filtered to non-expired records with `status=verified`. Driver submissions are saved with `status=pending`; a moderator must verify them before they appear.
+4. Public reads are filtered to non-expired records with `status=verified`. Driver submissions are saved with `status=pending`; a moderator must verify them before they appear. The submitting browser keeps a private local copy of pending reports and their map pins. This local copy is never included in the public API response.
 
 Routes:
 
@@ -23,7 +23,7 @@ Create a HeiGIT account and API key, then set `HEIGIT_API_KEY` in Vercel. TANGA 
 
 ## Data quality and privacy
 
-- Reports and fuel prices are crowd submissions, not official nationwide feeds. They stay pending until someone verifies them. The API does not expose pending rows.
+- Reports and fuel prices are crowd submissions, not official nationwide feeds. They stay pending until someone verifies them. The API does not expose pending rows. The app keeps the submitter's pending report copy in that browser's local storage so it survives feed refreshes and reloads.
 - Fuel prices expire after seven days; road reports expire after one day.
 - Police conduct complaints are intentionally excluded from this public report service. They need a separate private, access-controlled and moderated workflow.
 - This initial endpoint is an integration foundation. Before a public launch, add abuse controls (rate limiting/CAPTCHA or authenticated submissions), moderator tooling, and privacy/retention rules.
