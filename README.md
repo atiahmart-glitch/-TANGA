@@ -7,9 +7,9 @@ A mobile-friendly Ghana road-awareness website built with Leaflet and OpenStreet
 - Ghana map, place search, and current-location marker.
 - Optional map overlays for OpenStreetMap-mapped traffic lights and cameras, physical traffic signs, schools, fuel stations, rest stops, food places, hospitals, police stations, and selected road barriers in a zoomed-in visible area.
 - Vercel API routes for road reports, fuel-price reports, and car routes.
-- Driver reports and fuel submissions are held as pending until reviewed. Only verified, unexpired records are returned to the public map.
+- Driver reports and fuel submissions are held as pending until reviewed. Only verified, unexpired records are returned to the public map. The submitting browser keeps a private copy of pending reports and their location pins; they are not shared with other drivers.
 - Route lookup uses the HeiGIT openrouteservice API and reports distance/time estimates without claiming live traffic. The dashboard states which feeds are configured and distinguishes estimated routes from live traffic.
-- Offline submissions queue in the browser. Users can download a local JSON bundle of the last route and cached verified reports/prices.
+- Offline submissions queue in the browser. Users can download a local JSON bundle of the last route and cached verified reports/prices. A submitter's pending report remains in that browser's private report list until it is verified or removed locally.
 - Service worker caches the app shell after an online visit.
 
 ## Setup required

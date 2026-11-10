@@ -18,11 +18,18 @@
 <div class="modalback" id="fuelModal"><div class="modal"><button class="close" data-close>×</button><h2>Report a fuel price</h2><p>Your price is pending review and will not be shown as verified until approved.</p><label style="font-size:10px;color:#a7bdbe">STATION (OPTIONAL)</label><input class="field" id="fuelStation" placeholder="Station name"><label style="font-size:10px;color:#a7bdbe">FUEL TYPE</label><select class="field" id="fuelProduct"><option value="petrol">Petrol</option><option value="diesel">Diesel</option><option value="lpg">LPG</option></select><label style="font-size:10px;color:#a7bdbe">PRICE · GH₵ PER LITRE</label><input class="field" id="fuelPrice" type="number" min="0.1" step="0.01" placeholder="e.g. 14.50"><label style="font-size:10px;color:#a7bdbe">LOCATION / LANDMARK</label><input class="field" id="fuelLocation" placeholder="Nearest town or landmark"><button class="ghost" type="button" id="fuelGpsBtn">◎ Use my current location</button><p class="legal" id="fuelGpsStatus">A location pin is required.</p><button class="primary submit" id="submitFuel">Submit price for review</button></div></div>
 <div class="modalback" id="premiumModal"><div class="modal submodal"><button class="close" data-close>×</button><div class="logo" style="margin:auto">T</div><h2 style="margin-top:12px">Go further with TANGA+</h2><p>One month free. Cancel anytime.</p><div class="big">30<span style="font-size:15px;color:var(--muted)"> days free</span></div><p>Offline maps · smart route alerts · night road watch · expanded trip planning</p><button class="primary submit" id="trialBtn">Start my free month</button><p class="legal">Subscription pricing and billing will be configured before launch. App Store and Google Play billing integration required for native mobile apps.</p></div></div>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="anonymous"></script><script>
-let roadMap, locationMarker, searchMarker, routeLayer, reportMarkers=[];
+let roadMap, locationMarker, searchMarker, routeLayer, reportMarkers=[], privateReportMarkers=[];
 let reportCoordinates=null, fuelCoordinates=null, lastRoute=null;
-const pendingKey="tanga-pending-submissions";
+const pendingKey="tanga-pending-submissions", privateReportsKey="tanga-private-reports";
 function pendingQueue(){try{return JSON.parse(localStorage.getItem(pendingKey)||"[]")}catch{return []}}
 function saveQueue(queue){localStorage.setItem(pendingKey,JSON.stringify(queue))}
+function privateReports(){try{return JSON.parse(localStorage.getItem(privateReportsKey)||"[]")}catch{return []}}
+function savePrivateReports(items){try{localStorage.setItem(privateReportsKey,JSON.stringify(items))}catch{}}
+function updatePrivateReport(payload,state){
+  const items=privateReports();
+  const item=items.find(report=>report.status==='queued'&&report.category===payload.category&&report.location_label===payload.location_label&&report.latitude===payload.latitude&&report.longitude===payload.longitude);
+  if(item){item.status=state;savePrivateReports(items)}
+}
 const networkLabel=document.getElementById('networkLabel');
 const mapNotice=document.getElementById('mapnotice');
 function updateNetworkState(){
@@ -77,30 +84,50 @@ function captureGps(statusId, locationInputId, target) {
   },()=>{
     document.getElementById(statusId).textContent='Location unavailable. Allow location access and try again.';
     toast('Could not get your location');
-  },{enableHighAccuracy:true,timeout:12000,maximumAge:60000});
+  },{enableHighAccuracy:true,timeout:20000,maximumAge:0});
 }
 document.getElementById('reportGpsBtn').onclick=()=>captureGps('reportGpsStatus','locationField',{set coords(value){reportCoordinates=value}});
 document.getElementById('fuelGpsBtn').onclick=()=>captureGps('fuelGpsStatus','fuelLocation',{set coords(value){fuelCoordinates=value}});
-function renderLocalSubmission(category, location, details, state) {
-  const item=document.createElement('article');item.className='incident';
+function renderLocalSubmission(report) {
+  const list=document.getElementById('incidentList');
+  if(Array.from(list.querySelectorAll('[data-private-report-id]')).some(item=>item.dataset.privateReportId===report.id))return;
+  const item=document.createElement('article');item.className='incident';item.dataset.privateReportId=report.id;
   const icon=document.createElement('div');icon.className='tagicon';icon.textContent='!';
-  const body=document.createElement('div');const title=document.createElement('b');title.textContent=category;
-  const description=document.createElement('p');description.textContent=location+(details?' · '+details:'');
-  const meta=document.createElement('span');meta.className='meta';meta.textContent=state;
-  body.append(title,description,meta);item.append(icon,body);document.getElementById('incidentList').prepend(item);
+  const body=document.createElement('div');const title=document.createElement('b');title.textContent=report.category;
+  const description=document.createElement('p');description.textContent=report.location_label+(report.details?' · '+report.details:'');
+  const meta=document.createElement('span');meta.className='meta';meta.textContent=report.status==='queued'?'Saved privately on this device · waiting to send':'Submitted · private until review';
+  const view=document.createElement('button');view.type='button';view.className='confirm';view.textContent='View pin';view.onclick=()=>{if(roadMap)roadMap.setView([report.latitude,report.longitude],16)};
+  body.append(title,description,meta,view);item.append(icon,body);document.getElementById('incidentList').append(item);
+}
+function addPrivateReportMarker(report) {
+  if(!roadMap)return;
+  const popup=document.createElement('div');popup.textContent=report.category+' · pending review · private to this device';
+  const marker=L.circleMarker([report.latitude,report.longitude],{radius:8,color:'#70aee8',fillColor:'#78b8ff',fillOpacity:.95,weight:3}).addTo(roadMap).bindPopup(popup);
+  privateReportMarkers.push(marker);
+}
+function reconcilePrivateReports(verified){
+  const local=privateReports(),kept=local.filter(report=>!verified.some(item=>
+    item.category===report.category&&item.location_label===report.location_label&&item.details===report.details&&
+    Math.abs(Number(item.latitude)-report.latitude)<0.0001&&Math.abs(Number(item.longitude)-report.longitude)<0.0001&&
+    Math.abs(Date.parse(item.created_at||'')-Date.parse(report.createdAt||''))<48*60*60*1000
+  ));
+  if(kept.length!==local.length)savePrivateReports(kept);
+  return kept;
 }
 async function submitOrQueue(action,payload) {
   if(!navigator.onLine){const queue=pendingQueue();queue.push({action,payload,queuedAt:new Date().toISOString()});saveQueue(queue);return 'queued'}
   const response=await fetch('/api/road-services?action='+action,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
   const result=await response.json().catch(()=>({}));
   if(!response.ok)throw new Error(result.error||'Submission failed');
+  if(result.setup_required)throw new Error(action==='fuel'?'Fuel reporting is not configured yet, so this price was not sent. Please try again later.':'Reports are not configured yet, so this report was not sent. Please try again later.');
+  if((action==='reports'||action==='fuel')&&result.saved!==true)throw new Error(result.error||'This submission was not saved. Please try again.');
   return result.status||'pending';
 }
 async function flushPendingSubmissions() {
   if(!navigator.onLine)return;
   const queue=pendingQueue(),remaining=[];
   for(const entry of queue){
-    try{await submitOrQueue(entry.action,entry.payload)}catch{remaining.push(entry)}
+    try{const status=await submitOrQueue(entry.action,entry.payload);if(entry.action==='reports')updatePrivateReport(entry.payload,status==='queued'?'queued':'pending')}catch{remaining.push(entry)}
   }
   saveQueue(remaining);
 }
@@ -114,7 +141,10 @@ document.getElementById('submitReport').onclick=async()=>{
   const payload={category,details:detail,location_label:locationText,...reportCoordinates};
   try{
     const result=await submitOrQueue('reports',payload);
-    renderLocalSubmission(category,locationText,detail,result==='queued'?'Saved on this device · waiting to send':'Sent for moderation · not yet public');
+    const localReport={...payload,id:Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,8),createdAt:new Date().toISOString(),status:result==='queued'?'queued':'pending'};
+    const savedReports=privateReports();savedReports.push(localReport);savePrivateReports(savedReports);
+    renderLocalSubmission(localReport);addPrivateReportMarker(localReport);
+    if(roadMap)roadMap.setView([localReport.latitude,localReport.longitude],16);
     modal('reportModal',false);document.getElementById('locationField').value='';document.getElementById('detailField').value='';reportCoordinates=null;
     document.getElementById('reportGpsStatus').textContent='A location pin is required to send a report.';
     toast(result==='queued'?'Saved offline; will send when connected':'Report sent for review');
@@ -133,16 +163,23 @@ document.getElementById('submitFuel').onclick=async()=>{
   }catch(error){toast(error.message||'Could not submit price')}
 };
 async function loadRoadData(){
-  if(!navigator.onLine)return;
+  const list=document.getElementById('incidentList');
+  if(!navigator.onLine){
+    privateReportMarkers.forEach(marker=>marker.remove());privateReportMarkers=[];
+    privateReports().forEach(report=>{renderLocalSubmission(report);addPrivateReportMarker(report)});
+    return;
+  }
   try{
     const response=await fetch('/api/road-services?action=reports');if(!response.ok)throw new Error();
     const data=await response.json(),items=data.items||[];
     const count=document.getElementById('communityReportCount'),label=document.getElementById('communityReportLabel');
     if(data.setup_required){if(count)count.textContent='Setup';if(label)label.textContent='Reports · Supabase setup required'}
     else{if(count)count.textContent=String(items.length);if(label)label.textContent=items.length?'Verified community reports · Supabase':'Verified reports · none right now'}
-    if(roadMap)reportMarkers.forEach(marker=>marker.remove());reportMarkers=[];
-    const list=document.getElementById('incidentList');list.replaceChildren();
-    if(!items.length){const empty=document.createElement('div');empty.className='incident';empty.innerHTML='<div class="tagicon">i</div><div><b>No current verified reports</b><p>New reports stay private until reviewed.</p></div>';list.append(empty)}
+    if(roadMap){reportMarkers.forEach(marker=>marker.remove());privateReportMarkers.forEach(marker=>marker.remove())}
+    reportMarkers=[];privateReportMarkers=[];
+    list.replaceChildren();
+    const local=reconcilePrivateReports(items);
+    if(!items.length&&!local.length){const empty=document.createElement('div');empty.className='incident';empty.innerHTML='<div class="tagicon">i</div><div><b>No current verified reports</b><p>New reports stay private until reviewed.</p></div>';list.append(empty)}
     items.forEach(report=>{
       const item=document.createElement('article');item.className='incident';
       const icon=document.createElement('div');icon.className='tagicon';icon.textContent='⚠';
@@ -155,6 +192,7 @@ async function loadRoadData(){
         const marker=L.circleMarker([report.latitude,report.longitude],{radius:7,color:'#b34b35',fillColor:'#ff6f69',fillOpacity:.9});marker.addTo(roadMap).bindPopup(popup);reportMarkers.push(marker);
       }
     });
+    local.forEach(report=>{renderLocalSubmission(report);addPrivateReportMarker(report)});
     document.getElementById('reportsStatus').textContent=items.length?'● VERIFIED':'● NO VERIFIED REPORTS';
     localStorage.setItem('tanga-verified-reports',JSON.stringify(items));
   }catch{document.getElementById('reportsStatus').textContent='● SERVICE UNAVAILABLE'}
